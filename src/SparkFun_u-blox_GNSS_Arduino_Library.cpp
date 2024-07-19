@@ -4101,7 +4101,7 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
           packetNumber = packetNumber + 1;
           if (packetNumber >= packetStorageRate)
           {
-            _debugSerial->print(F("Storing new packet !"));
+            _debugSerial->println(F("Storing new packet !"));
             storePacket(msg);
             packetNumber = 0;
           }
