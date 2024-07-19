@@ -4099,15 +4099,15 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
 
-          if (packetNumber >= packetStorageRate)
+          if (packetNumber < packetStorageRate)
+          {
+            packetNumber = packetNumber + 1;
+          }
+          else
           {
             _debugSerial->println(F("Storing new packet !"));
             storePacket(msg);
             packetNumber = 0;
-          }
-          else
-          {
-            packetNumber = packetNumber + 1;
           }
         }
       }
