@@ -572,6 +572,12 @@ void SFE_UBLOX_GNSS::end(void)
 #endif
 }
 
+bool setPacketStoreRate(uint32_t rate)
+{
+  packetStorateRate = rate;
+  return true
+}
+
 // Allow the user to change packetCfgPayloadSize. Handy if you want to process big messages like RAWX
 // This can be called before .begin if required / desired
 bool SFE_UBLOX_GNSS::setPacketCfgPayloadSize(size_t payloadSize)
@@ -4092,7 +4098,13 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          packetNumber = packetNumber + 1;
+          if (packetNumber >= packetStorageRate)
+          {
+            _debugSerial->print(F("Storing new packet !"));
+            storePacket(msg);
+            packetNumber = 0;
+          }
         }
       }
     }
@@ -4701,7 +4713,7 @@ sfe_ublox_status_e SFE_UBLOX_GNSS::sendI2cCommand(ubxPacket *outgoingUBX, uint16
 
     if (bytesSent == 0) // Is this the first write? If it is, write the header bytes
     {
-      _i2cPort->write(UBX_SYNCH_1); //μ - oh ublox, you're funny. I will call you micro-blox from now on.
+      _i2cPort->write(UBX_SYNCH_1); // μ - oh ublox, you're funny. I will call you micro-blox from now on.
       _i2cPort->write(UBX_SYNCH_2); // b
       _i2cPort->write(outgoingUBX->cls);
       _i2cPort->write(outgoingUBX->id);
@@ -4777,7 +4789,7 @@ sfe_ublox_status_e SFE_UBLOX_GNSS::sendI2cCommand(ubxPacket *outgoingUBX, uint16
 void SFE_UBLOX_GNSS::sendSerialCommand(ubxPacket *outgoingUBX)
 {
   // Write header bytes
-  _serialPort->write(UBX_SYNCH_1); //μ - oh ublox, you're funny. I will call you micro-blox from now on.
+  _serialPort->write(UBX_SYNCH_1); // μ - oh ublox, you're funny. I will call you micro-blox from now on.
   _serialPort->write(UBX_SYNCH_2); // b
   _serialPort->write(outgoingUBX->cls);
   _serialPort->write(outgoingUBX->id);
@@ -4827,7 +4839,7 @@ void SFE_UBLOX_GNSS::sendSpiCommand(ubxPacket *outgoingUBX)
   _spiPort->beginTransaction(SPISettings(_spiSpeed, MSBFIRST, SPI_MODE0));
   digitalWrite(_csPin, LOW);
   // Write header bytes
-  spiTransfer(UBX_SYNCH_1); //μ - oh ublox, you're funny. I will call you micro-blox from now on.
+  spiTransfer(UBX_SYNCH_1); // μ - oh ublox, you're funny. I will call you micro-blox from now on.
   spiTransfer(UBX_SYNCH_2); // b
 
   spiTransfer(outgoingUBX->cls);
@@ -5133,7 +5145,7 @@ sfe_ublox_status_e SFE_UBLOX_GNSS::waitForACKResponse(ubxPacket *outgoingUBX, ui
     } // checkUbloxInternal == true
 
     delay(1); // Allow an RTOS to get an elbow in (#11)
-  }           // while (millis() < (startTime + (unsigned long)maxTime))
+  } // while (millis() < (startTime + (unsigned long)maxTime))
 
   // We have timed out...
   // If the outgoingUBX->classAndIDmatch is VALID then we can take a gamble and return DATA_RECEIVED
@@ -8162,7 +8174,7 @@ bool SFE_UBLOX_GNSS::setPowerManagement(sfe_ublox_pms_mode_e mode, uint16_t peri
   packetCfg.len = 8;
   packetCfg.startingSpot = 0;
 
-  packetCfg.payload[0] = 0x0; //message version
+  packetCfg.payload[0] = 0x0; // message version
   packetCfg.payload[1] = mode;
   // only valid if mode==SFE_UBLOX_PMS_MODE_INTERVAL
   if (mode == SFE_UBLOX_PMS_MODE_INTERVAL)
@@ -8179,8 +8191,8 @@ bool SFE_UBLOX_GNSS::setPowerManagement(sfe_ublox_pms_mode_e mode, uint16_t peri
     packetCfg.payload[4] = 0;
     packetCfg.payload[5] = 0;
   }
-  packetCfg.payload[6] = 0x0; //reserved
-  packetCfg.payload[7] = 0x0; //reserved
+  packetCfg.payload[6] = 0x0; // reserved
+  packetCfg.payload[7] = 0x0; // reserved
   return sendCommand(&packetCfg, maxWait);
 }
 
@@ -8191,12 +8203,11 @@ bool SFE_UBLOX_GNSS::setupPowerMode(sfe_ublox_rxm_mode_e mode, uint16_t maxWait)
   packetCfg.len = 2;
   packetCfg.startingSpot = 0;
 
-  packetCfg.payload[0] = 0x0; //reserved
-  packetCfg.payload[1] = mode; //low power mode
+  packetCfg.payload[0] = 0x0;  // reserved
+  packetCfg.payload[1] = mode; // low power mode
 
   return sendCommand(&packetCfg, maxWait);
 }
-
 
 // Position Accuracy
 
@@ -8236,13 +8247,10 @@ uint16_t SFE_UBLOX_GNSS::getNAV5PositionAccuracy(uint16_t maxWait)
   if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
     return 0;
 
-
   uint16_t pAcc = ((uint16_t)payloadCfg[19]) << 8;
   pAcc |= payloadCfg[18];
   return (pAcc);
 }
-
-
 
 // Dynamic Platform Model
 
@@ -8263,7 +8271,7 @@ bool SFE_UBLOX_GNSS::setDynamicModel(dynModel newDynamicModel, uint16_t maxWait)
   if (sendCommand(&packetCfg, maxWait) != SFE_UBLOX_STATUS_DATA_RECEIVED) // We are expecting data and an ACK
     return (false);
 
-  payloadCfg[0] |= 0x01;            // mask: set only the dyn bit (0)
+  payloadCfg[0] |= 0x01;           // mask: set only the dyn bit (0)
   payloadCfg[2] = newDynamicModel; // dynModel
 
   packetCfg.len = 36;
@@ -8319,7 +8327,7 @@ bool SFE_UBLOX_GNSS::enableOdometer(bool enable, uint16_t maxWait)
 
   return (sendCommand(&packetCfg, maxWait) == SFE_UBLOX_STATUS_DATA_SENT); // We are only expecting an ACK
 }
-  
+
 // Read the odometer configuration
 bool SFE_UBLOX_GNSS::getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint16_t maxWait)
 {
@@ -9449,7 +9457,7 @@ uint8_t SFE_UBLOX_GNSS::newCfgValset8(uint32_t key, uint8_t value, uint8_t layer
 
   _numCfgKeyIDs = 1;
 
-// Clear all of packet payload
+  // Clear all of packet payload
   memset(payloadCfg, 0, packetCfgPayloadSize);
 
   payloadCfg[0] = 0;     // Message Version - set to 0
@@ -17469,9 +17477,9 @@ bool SFE_UBLOX_GNSS::getNAVPVTPSMMode(uint16_t maxWait)
   if (packetUBXNAVPVT == NULL) // Bail if the RAM allocation failed
     return 0;
 
-  if (packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.psmState== false)
+  if (packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.psmState == false)
     getPVT(maxWait);
-  packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.psmState= false; // Since we are about to give this to user, mark this data as stale
+  packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.psmState = false; // Since we are about to give this to user, mark this data as stale
   packetUBXNAVPVT->moduleQueried.moduleQueried1.bits.all = false;
   return (packetUBXNAVPVT->data.flags.bits.psmState);
 }

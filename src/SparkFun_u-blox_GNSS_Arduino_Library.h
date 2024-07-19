@@ -57,10 +57,10 @@
 #include "u-blox_structs.h"
 
 // Uncomment the next line (or add SFE_UBLOX_REDUCED_PROG_MEM as a compiler directive) to reduce the amount of program memory used by the library
-//#define SFE_UBLOX_REDUCED_PROG_MEM // Uncommenting this line will delete the minor debug messages to save memory
+#define SFE_UBLOX_REDUCED_PROG_MEM // Uncommenting this line will delete the minor debug messages to save memory
 
 // Uncomment the next line (or add SFE_UBLOX_DISABLE_AUTO_NMEA as a compiler directive) to reduce the amount of program memory used by the library
-//#define SFE_UBLOX_DISABLE_AUTO_NMEA // Uncommenting this line will disable auto-NMEA support to save memory
+#define SFE_UBLOX_DISABLE_AUTO_NMEA // Uncommenting this line will disable auto-NMEA support to save memory
 
 // The code exceeds the program memory on the ATmega328P (Arduino Uno), so let's delete the minor debug messages and disable auto-NMEA support anyway
 // However, the ATmega2560 and ATmega1280 _do_ have enough memory, so let's exclude those
@@ -593,7 +593,7 @@ enum sfe_ublox_pms_mode_e
   SFE_UBLOX_PMS_MODE_INVALID = 0xff
 };
 
-//Values for UBX-CFG-RXM
+// Values for UBX-CFG-RXM
 enum sfe_ublox_rxm_mode_e
 {
   SFE_UBLOX_CFG_RXM_CONTINUOUS = 0,
@@ -605,7 +605,7 @@ enum sfe_ublox_rxm_mode_e
 #ifndef MAX_PAYLOAD_SIZE
 // v2.0: keep this for backwards-compatibility, but this is largely superseded by setPacketCfgPayloadSize
 #define MAX_PAYLOAD_SIZE 276 // We need >=250 bytes for getProtocolVersion on the NEO-F10N
-//#define MAX_PAYLOAD_SIZE 768 //Worst case: UBX_CFG_VALSET packet with 64 keyIDs each with 64 bit values
+// #define MAX_PAYLOAD_SIZE 768 //Worst case: UBX_CFG_VALSET packet with 64 keyIDs each with 64 bit values
 #endif
 
 // For storing SPI bytes received during sendSpiCommand
@@ -696,6 +696,8 @@ public:
 #ifndef defaultMaxWait // Let's allow the user to define their own value if they want to
 #define defaultMaxWait 1100
 #endif
+
+  bool setPacketStoreRate(uint32_t rate);
 
   // New in v2.0: allow the payload size for packetCfg to be changed
   bool setPacketCfgPayloadSize(size_t payloadSize); // Set packetCfgPayloadSize
@@ -943,7 +945,7 @@ public:
   bool powerOff(uint32_t durationInMs, uint16_t maxWait = defaultMaxWait);
   bool powerOffWithInterrupt(uint32_t durationInMs, uint32_t wakeupSources = VAL_RXM_PMREQ_WAKEUPSOURCE_EXTINT0, bool forceWhileUsb = true, uint16_t maxWait = defaultMaxWait);
   // Power Mode Setup. Values period and onTime are only valid if mode is SFE_UBLOX_PMS_MODE_INTERVAL
-  bool setPowerManagement(sfe_ublox_pms_mode_e mode, uint16_t period=0, uint16_t onTime=0, uint16_t maxWait = defaultMaxWait);
+  bool setPowerManagement(sfe_ublox_pms_mode_e mode, uint16_t period = 0, uint16_t onTime = 0, uint16_t maxWait = defaultMaxWait);
   bool setupPowerMode(sfe_ublox_rxm_mode_e mode, uint16_t maxWait = defaultMaxWait);
 
   // Change the dynamic platform model using UBX-CFG-NAV5
@@ -955,10 +957,10 @@ public:
   uint16_t getNAV5PositionAccuracy(uint16_t maxWait = defaultMaxWait); // Get the position accuracy - returns 0 if the sendCommand fails
 
   // Reset / enable / configure the odometer
-  bool resetOdometer(uint16_t maxWait = defaultMaxWait); // Reset the odometer
-  bool enableOdometer(bool enable = true, uint16_t maxWait = defaultMaxWait); // Enable / disable the odometer
+  bool resetOdometer(uint16_t maxWait = defaultMaxWait);                                                                                                                           // Reset the odometer
+  bool enableOdometer(bool enable = true, uint16_t maxWait = defaultMaxWait);                                                                                                      // Enable / disable the odometer
   bool getOdometerConfig(uint8_t *flags, uint8_t *odoCfg, uint8_t *cogMaxSpeed, uint8_t *cogMaxPosAcc, uint8_t *velLpGain, uint8_t *cogLpGain, uint16_t maxWait = defaultMaxWait); // Read the odometer configuration
-  bool setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint16_t maxWait = defaultMaxWait); // Configure the odometer
+  bool setOdometerConfig(uint8_t flags, uint8_t odoCfg, uint8_t cogMaxSpeed, uint8_t cogMaxPosAcc, uint8_t velLpGain, uint8_t cogLpGain, uint16_t maxWait = defaultMaxWait);       // Configure the odometer
 
   // Enable/Disable individual GNSS systems using UBX-CFG-GNSS
   // Note: you must leave at least one major GNSS enabled! If in doubt, enable GPS before disabling the others
@@ -1424,9 +1426,9 @@ public:
 
   uint8_t getFixType(uint16_t maxWait = defaultMaxWait); // Returns the type of fix: 0=no, 3=3D, 4=GNSS+Deadreckoning
 
-  bool getGnssFixOk(uint16_t maxWait = defaultMaxWait); // Get whether we have a valid fix (i.e within DOP & accuracy masks)
+  bool getGnssFixOk(uint16_t maxWait = defaultMaxWait);     // Get whether we have a valid fix (i.e within DOP & accuracy masks)
   bool getNAVPVTPSMMode(uint16_t maxWait = defaultMaxWait); // Not fully documented power save mode value
-  bool getDiffSoln(uint16_t maxWait = defaultMaxWait);  // Get whether differential corrections were applied
+  bool getDiffSoln(uint16_t maxWait = defaultMaxWait);      // Get whether differential corrections were applied
   bool getHeadVehValid(uint16_t maxWait = defaultMaxWait);
   uint8_t getCarrierSolutionType(uint16_t maxWait = defaultMaxWait); // Returns RTK solution: 0=no, 1=float solution, 2=fixed solution
 
@@ -1757,6 +1759,12 @@ private:
   size_t packetCfgPayloadSize = 0; // Size for the packetCfg payload. .begin will set this to MAX_PAYLOAD_SIZE if necessary. User can change with setPacketCfgPayloadSize
   uint8_t *payloadCfg = NULL;
   uint8_t *payloadAuto = NULL;
+
+  // Variable to handle the storage rate of UBX packet
+  uint32_t packetStorateRate;
+
+  // Variable to track the number of packet before storing one
+  uint32_t packetNumber;
 
   uint8_t *spiBuffer = NULL;                              // A buffer to store any bytes being recieved back from the device while we are sending via SPI
   uint8_t spiBufferIndex = 0;                             // Index into the SPI buffer
