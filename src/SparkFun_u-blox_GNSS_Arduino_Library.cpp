@@ -3113,9 +3113,11 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
           if (packetNumber < packetStorageRate)
           {
             packetNumber = packetNumber + 1;
+            _debugSerial->println(F("PACKET SKIPPED..."));
           }
           else
           {
+            _debugSerial->println(F("PACKET PROCESSED !"));
             processUBXpacket(incomingUBX);
             packetNumber = 0;
           }
