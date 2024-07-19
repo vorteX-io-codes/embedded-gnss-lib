@@ -574,7 +574,7 @@ void SFE_UBLOX_GNSS::end(void)
 
 bool SFE_UBLOX_GNSS::setPacketStoreRate(uint32_t rate)
 {
-  packetStorateRate = rate;
+  packetStorageRate = rate;
   return true;
 }
 
