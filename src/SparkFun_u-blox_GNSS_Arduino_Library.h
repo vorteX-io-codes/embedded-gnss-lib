@@ -1761,7 +1761,7 @@ private:
   uint8_t *payloadAuto = NULL;
 
   // Variable to handle the storage rate of UBX packet
-  uint32_t packetStorateRate;
+  uint32_t packetStorageRate;
 
   // Variable to track the number of packet before storing one
   uint32_t packetNumber;
