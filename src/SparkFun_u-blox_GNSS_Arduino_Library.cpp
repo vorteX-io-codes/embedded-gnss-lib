@@ -4098,16 +4098,24 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-
-          if (packetNumber < packetStorageRate)
+          if (packetStorageRate == 1)
           {
-            packetNumber = packetNumber + 1;
+            _debugSerial->println(F("Storing packet !"));
+            storePacket(msg);
           }
           else
           {
-            _debugSerial->println(F("Storing new packet !"));
-            storePacket(msg);
-            packetNumber = 0;
+            if (packetNumber < packetStorageRate)
+            {
+              packetNumber = packetNumber + 1;
+              _debugSerial->println(F("Skipping packet !"));
+            }
+            else
+            {
+              _debugSerial->println(F("Storing packet !"));
+              storePacket(msg);
+              packetNumber = 0;
+            }
           }
         }
       }

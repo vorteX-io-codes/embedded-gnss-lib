@@ -1764,7 +1764,7 @@ private:
   uint32_t packetStorageRate;
 
   // Variable to track the number of packet before storing one
-  uint32_t packetNumber;
+  uint32_t packetNumber = 0;
 
   uint8_t *spiBuffer = NULL;                              // A buffer to store any bytes being recieved back from the device while we are sending via SPI
   uint8_t spiBufferIndex = 0;                             // Index into the SPI buffer
