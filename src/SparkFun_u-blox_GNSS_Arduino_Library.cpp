@@ -575,7 +575,7 @@ void SFE_UBLOX_GNSS::end(void)
 bool setPacketStoreRate(uint32_t rate)
 {
   packetStorateRate = rate;
-  return true
+  return true;
 }
 
 // Allow the user to change packetCfgPayloadSize. Handy if you want to process big messages like RAWX
