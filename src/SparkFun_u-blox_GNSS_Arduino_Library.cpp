@@ -3104,7 +3104,25 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
       // We've got a valid packet, now do something with it but only if ignoreThisPayload is false
       if (ignoreThisPayload == false)
       {
-        processUBXpacket(incomingUBX);
+        if (packetStorageRate == 1)
+        {
+          _debugSerial->println(F("Processing packet !"));
+          processUBXpacket(incomingUBX);
+        }
+        else
+        {
+          if (packetNumber < packetStorageRate)
+          {
+            packetNumber = packetNumber + 1;
+            _debugSerial->println(F("Skipping packet !"));
+          }
+          else
+          {
+            _debugSerial->println(F("Processing packet !"));
+            processUBXpacket(incomingUBX);
+            packetNumber = 0;
+          }
+        }
       }
     }
     else // Checksum failure
@@ -4098,25 +4116,7 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          if (packetStorageRate == 1)
-          {
-            _debugSerial->println(F("Storing packet !"));
-            storePacket(msg);
-          }
-          else
-          {
-            if (packetNumber < packetStorageRate)
-            {
-              packetNumber = packetNumber + 1;
-              _debugSerial->println(F("Skipping packet !"));
-            }
-            else
-            {
-              _debugSerial->println(F("Storing packet !"));
-              storePacket(msg);
-              packetNumber = 0;
-            }
-          }
+          storePacket(msg);
         }
       }
     }
