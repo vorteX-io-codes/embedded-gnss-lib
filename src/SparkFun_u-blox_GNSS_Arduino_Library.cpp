@@ -3112,12 +3112,10 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
         {
           if (packetNumber < packetStorageRate)
           {
-            _debugSerial->println(F("========= SKIPPED ======="));
             packetNumber = packetNumber + 1;
           }
           else
           {
-            _debugSerial->println(F("========= PROCESSED ======="));
             processUBXpacket(incomingUBX);
             packetNumber = 0;
           }
