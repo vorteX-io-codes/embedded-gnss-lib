@@ -3227,7 +3227,6 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
 void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
-  _debugSerial->println(F("====== STORING NEW PACKET ======"));
   switch (msg->cls)
   {
   case UBX_CLASS_NAV:
@@ -7063,6 +7062,8 @@ uint16_t SFE_UBLOX_GNSS::fileBufferSpaceUsed(void)
 // PRIVATE: Add a UBX packet to the file buffer
 bool SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
 {
+  _debugSerial->println(F("====== STORING NEW PACKET ======"));
+
   // First, check that the file buffer has been created
   if ((ubxFileBuffer == NULL) || (fileBufferSize == 0))
   {
