@@ -3082,7 +3082,7 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
         _debugSerial->print(F(" Received: "));
         printPacket(incomingUBX);
 
-        if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
+        /*if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
         {
           _debugSerial->println(F("packetCfg now valid"));
         }
@@ -3097,7 +3097,7 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
         if (packetAck.classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
         {
           _debugSerial->println(F("packetAck classAndIDmatch"));
-        }
+        }*/
       }
 #endif
 
@@ -3227,6 +3227,7 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
 void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
+  _debugSerial->println(F("====== STORING NEW PACKET ======"));
   switch (msg->cls)
   {
   case UBX_CLASS_NAV:
