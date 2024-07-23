@@ -3077,10 +3077,10 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
       if (_printDebug == true)
       {
-        _debugSerial->print(F("Incoming: Size: "));
+        /*_debugSerial->print(F("Incoming: Size: "));
         _debugSerial->print(incomingUBX->len);
         _debugSerial->print(F(" Received: "));
-        printPacket(incomingUBX);
+        printPacket(incomingUBX);*/
 
         /*if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
         {
