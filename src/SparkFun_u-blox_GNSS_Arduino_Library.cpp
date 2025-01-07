@@ -1272,8 +1272,9 @@ bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedC
   while (_serialPort->available())
   {
     process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
+    return (true);
   }
-  return (true);
+  return (false);
 
 } // end checkUbloxSerial()
 
