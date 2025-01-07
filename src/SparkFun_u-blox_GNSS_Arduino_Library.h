@@ -896,8 +896,10 @@ public:
   void softwareResetGNSSOnly();                           // Controlled Software Reset (GNSS only) only restarts the GNSS tasks, without reinitializing the full system or reloading any stored configuration.
   bool factoryDefault(uint16_t maxWait = defaultMaxWait); // Reset module to factory defaults
 
-  // Save configuration to BBR / Flash
+  void startGNSS();
+  void stopGNSS();
 
+  // Save configuration to BBR / Flash
   bool saveConfiguration(uint16_t maxWait = defaultMaxWait);                        // Save current configuration to flash and BBR (battery backed RAM)
   bool saveConfigSelective(uint32_t configMask, uint16_t maxWait = defaultMaxWait); // Save the selected configuration sub-sections to flash and BBR (battery backed RAM)
 

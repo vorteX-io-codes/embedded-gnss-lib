@@ -7387,6 +7387,34 @@ void SFE_UBLOX_GNSS::softwareResetGNSSOnly()
   sendCommand(&packetCfg, 0); // don't expect ACK
 }
 
+void SFE_UBLOX_GNSS::stopGNSS()
+{
+  // Issue controlled software reset (GNSS only)
+  packetCfg.cls = UBX_CLASS_CFG;
+  packetCfg.id = UBX_CFG_RST;
+  packetCfg.len = 4;
+  packetCfg.startingSpot = 0;
+  payloadCfg[0] = 0;          // hot start
+  payloadCfg[1] = 0;          // hot start
+  payloadCfg[2] = 0x08;       // 0x08 = Controlled GNSS stop
+  payloadCfg[3] = 0;          // reserved
+  sendCommand(&packetCfg, 0); // don't expect ACK
+}
+
+void SFE_UBLOX_GNSS::startGNSS()
+{
+  // Issue controlled software reset (GNSS only)
+  packetCfg.cls = UBX_CLASS_CFG;
+  packetCfg.id = UBX_CFG_RST;
+  packetCfg.len = 4;
+  packetCfg.startingSpot = 0;
+  payloadCfg[0] = 0;          // hot start
+  payloadCfg[1] = 0;          // hot start
+  payloadCfg[2] = 0x09;       // 0x09 = Controlled GNSS start
+  payloadCfg[3] = 0;          // reserved
+  sendCommand(&packetCfg, 0); // don't expect ACK
+}
+
 // Reset module to factory defaults
 // This still works but it is the old way of configuring ublox modules. See getVal and setVal for the new methods
 bool SFE_UBLOX_GNSS::factoryDefault(uint16_t maxWait)
