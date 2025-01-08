@@ -1269,12 +1269,14 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
 // Checks Serial for data, passing any new bytes to process()
 bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
+  uint8_t processed = false;
   while (_serialPort->available())
   {
     process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
-    return (true);
+    processed = true;
   }
-  return (false);
+
+  return (processed);
 
 } // end checkUbloxSerial()
 
