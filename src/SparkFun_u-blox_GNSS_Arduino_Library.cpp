@@ -1270,14 +1270,11 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
 bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   uint8_t processed = false;
-  while (_serialPort->available())
+  while (_serialPort->available() && !processed)
   {
-    process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
-    processed = true;
+    processed = process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
   }
-
   return (processed);
-
 } // end checkUbloxSerial()
 
 // Checks SPI for data, passing any new bytes to process()
@@ -1697,8 +1694,9 @@ uint16_t SFE_UBLOX_GNSS::getMaxPayloadSize(uint8_t Class, uint8_t ID)
 
 // Processes NMEA and UBX binary sentences one byte at a time
 // Take a given byte and file it into the proper array
-void SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+bool SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
+  bool isPacketStored = false;
   if (_outputPort != NULL)
     _outputPort->write(incoming); // Echo this byte to the serial port
   if ((currentSentence == SFE_UBLOX_SENTENCE_TYPE_NONE) || (currentSentence == SFE_UBLOX_SENTENCE_TYPE_NMEA))
@@ -1946,7 +1944,7 @@ void SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t r
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF)
       processUBX(incoming, &packetBuf, requestedClass, requestedID);
     else // if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETAUTO)
-      processUBX(incoming, &packetAuto, requestedClass, requestedID);
+      isPacketStored = processUBX(incoming, &packetAuto, requestedClass, requestedID);
 
     // Finally, increment the frame counter
     ubxFrameCounter++;
@@ -2131,6 +2129,7 @@ void SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t r
   {
     currentSentence = processRTCMframe(incoming, &rtcmFrameCounter); // Deal with RTCM bytes
   }
+  return isPacketStored;
 }
 
 // PRIVATE: Return true if we should add this NMEA message to the file buffer for logging
@@ -2958,8 +2957,9 @@ void SFE_UBLOX_GNSS::processRTCM(uint8_t incoming)
 // Set valid to VALID or NOT_VALID once sentence is completely received and passes or fails CRC
 // The payload portion of the packet can be 100s of bytes but the max array size is packetCfgPayloadSize bytes.
 // startingSpot can be set so we only record a subset of bytes within a larger packet.
-void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
+  bool isPacketStored = false;
   // If incomingUBX is a user-defined custom packet, then the payload size could be different to packetCfgPayloadSize.
   // TO DO: update this to prevent an overrun when receiving an automatic message
   //        and the incomingUBX payload size is smaller than packetCfgPayloadSize.
@@ -3107,21 +3107,23 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
       // We've got a valid packet, now do something with it but only if ignoreThisPayload is false
       if (ignoreThisPayload == false)
       {
-        if (packetStorageRate == 1)
+        if (packetNumber >= packetStorageRate)
         {
-          processUBXpacket(incomingUBX);
+          isPacketStored = processUBXpacket(incomingUBX);
+          if (isPacketStored)
+          {
+            packetNumber = 1;
+          }
         }
         else
         {
-          if (packetNumber < packetStorageRate)
+          packetNumber = packetNumber + 1;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
           {
-            packetNumber = packetNumber + 1;
+            _debugSerial->println(F("!!!!!!! Packet ignored due to reduced rate !!!!!!!"));
           }
-          else
-          {
-            processUBXpacket(incomingUBX);
-            packetNumber = 0;
-          }
+#endif
         }
       }
     }
@@ -3225,11 +3227,13 @@ void SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 
   // Increment the counter
   incomingUBX->counter++;
+  return isPacketStored;
 }
 
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
-void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
+bool SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
+  bool isPacketStored = false;
   switch (msg->cls)
   {
   case UBX_CLASS_NAV:
@@ -4116,8 +4120,31 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+          {
+            _debugSerial->println(F("STORING PACKET RAWX---------------"));
+          }
+#endif
+          isPacketStored = storePacket(msg);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true) // This is important. Print this if doing limited debugging
+          {
+            _debugSerial->print(F("processUBXPacket : isPacketStored ?"));
+            _debugSerial->print(isPacketStored);
+            _debugSerial->println();
+          }
+#endif
         }
+      }
+      else
+      {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+        if (_printDebug == true)
+        {
+          _debugSerial->print(F("processUBXPacket: UNKNOWN ERROR !!! "));
+        }
+#endif
       }
     }
     break;
@@ -4557,6 +4584,7 @@ void SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
     }
     break;
   }
+  return isPacketStored;
 }
 
 // Given a message, calc and store the two byte "8-Bit Fletcher" checksum over the entirety of the message
