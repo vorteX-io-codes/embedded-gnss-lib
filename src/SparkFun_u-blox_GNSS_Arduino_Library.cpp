@@ -1845,6 +1845,12 @@ bool SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t r
           // This is not an ACK and we do not have a class and ID match
           // so we should keep diverting data into packetBuf and ignore the payload
           ignoreThisPayload = true;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+          if (_printDebug == true)
+          {
+            _debugSerial->println(F("process: PAYLOAD IS IGNORED"));
+          }
+#endif
         }
       }
       else
@@ -1938,13 +1944,53 @@ bool SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t r
 
     // Divert incoming into the correct buffer
     if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETACK)
+    {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial->println(F("GOING TO PROCESS THE PACKET ACK !!!"));
+      }
+#endif
       processUBX(incoming, &packetAck, requestedClass, requestedID);
+    }
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETCFG)
+    {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial->println(F("GOING TO PROCESS THE PACKET CFG !!!"));
+      }
+#endif
       processUBX(incoming, incomingUBX, requestedClass, requestedID);
+    }
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF)
+    {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial->println(F("GOING TO PROCESS THE PACKET BUF !!!"));
+      }
+#endif
       processUBX(incoming, &packetBuf, requestedClass, requestedID);
+    }
     else // if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETAUTO)
+    {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial->println(F("GOING TO PROCESS THE AUTO PACKET !!!"));
+      }
+#endif
       isPacketStored = processUBX(incoming, &packetAuto, requestedClass, requestedID);
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true) // This is important. Print this if doing limited debugging
+      {
+        _debugSerial->print(F("process : isPacketStored ?"));
+        _debugSerial->print(isPacketStored);
+        _debugSerial->println();
+      }
+#endif
+    }
 
     // Finally, increment the frame counter
     ubxFrameCounter++;
@@ -2960,6 +3006,13 @@ void SFE_UBLOX_GNSS::processRTCM(uint8_t incoming)
 bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   bool isPacketStored = false;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+  if (_printDebug == true)
+  {
+    _debugSerial->println(F("ENTERING PROCESS UBX !!!!"));
+  }
+#endif
+
   // If incomingUBX is a user-defined custom packet, then the payload size could be different to packetCfgPayloadSize.
   // TO DO: update this to prevent an overrun when receiving an automatic message
   //        and the incomingUBX payload size is smaller than packetCfgPayloadSize.
@@ -3080,12 +3133,12 @@ bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
       if (_printDebug == true)
       {
-        /*_debugSerial->print(F("Incoming: Size: "));
+        _debugSerial->print(F("Incoming: Size: "));
         _debugSerial->print(incomingUBX->len);
         _debugSerial->print(F(" Received: "));
-        printPacket(incomingUBX);*/
+        printPacket(incomingUBX);
 
-        /*if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
+        if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
         {
           _debugSerial->println(F("packetCfg now valid"));
         }
@@ -3100,7 +3153,7 @@ bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
         if (packetAck.classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
         {
           _debugSerial->println(F("packetAck classAndIDmatch"));
-        }*/
+        }
       }
 #endif
 
@@ -3234,6 +3287,15 @@ bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 bool SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
   bool isPacketStored = false;
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+  if (_printDebug == true)
+  {
+    _debugSerial->print(F("processUBX: message: Class: 0x"));
+    _debugSerial->print(msg->cls, HEX);
+    _debugSerial->print(F(" ID: 0x"));
+    _debugSerial->println(msg->id, HEX);
+  }
+#endif
   switch (msg->cls)
   {
   case UBX_CLASS_NAV:
@@ -4071,6 +4133,12 @@ bool SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
     else if (msg->id == UBX_RXM_RAWX)
     // Note: length is variable
     {
+#ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      if (_printDebug == true)
+      {
+        _debugSerial->println(F("processUBXPacket: RAW X DETECTED"));
+      }
+#endif
       // Parse various byte fields into storage - but only if we have memory allocated for it
       if (packetUBXRXMRAWX != NULL)
       {
