@@ -1764,10 +1764,10 @@ private:
   uint8_t *payloadAuto = NULL;
 
   // Variable to handle the storage rate of UBX packet
-  uint32_t packetStorageRate;
+  uint32_t packetStorageRate = 1;
 
   // Variable to track the number of packet before storing one
-  uint32_t packetNumber = 0;
+  uint32_t packetNumber = 1;
 
   uint8_t *spiBuffer = NULL;                              // A buffer to store any bytes being recieved back from the device while we are sending via SPI
   uint8_t spiBufferIndex = 0;                             // Index into the SPI buffer
