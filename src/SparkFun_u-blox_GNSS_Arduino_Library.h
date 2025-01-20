@@ -783,15 +783,15 @@ public:
 
   // Process the incoming data
 
-  bool process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);             // Processes NMEA and UBX binary sentences one byte at a time
+  int process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);              // Processes NMEA and UBX binary sentences one byte at a time
   void processNMEA(char incoming) __attribute__((weak));                                                           // Given a NMEA character, do something with it. User can overwrite if desired to use something like tinyGPS or MicroNMEA libraries
   virtual void processNMEA_v(char incoming);                                                                       // Given a NMEA character, do something with it. User can overwrite if desired to use something like tinyGPS or MicroNMEA libraries
   sfe_ublox_sentence_types_e processRTCMframe(uint8_t incoming, uint16_t *rtcmFrameCounter) __attribute__((weak)); // Monitor the incoming bytes for start and length bytes
   virtual sfe_ublox_sentence_types_e processRTCMframe_v(uint8_t incoming, uint16_t *rtcmFrameCounter);             // Monitor the incoming bytes for start and length bytes
   void processRTCM(uint8_t incoming) __attribute__((weak));                                                        // Given rtcm byte, do something with it. User can overwrite if desired to pipe bytes to radio, internet, etc.
   virtual void processRTCM_v(uint8_t incoming);                                                                    // Given rtcm byte, do something with it. User can overwrite if desired to pipe bytes to radio, internet, etc.
-  bool processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);          // Given a character, file it away into the uxb packet structure
-  bool processUBXpacket(ubxPacket *msg);                                                                           // Once a packet has been received and validated, identify this packet's class/id and update internal flags
+  int processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);           // Given a character, file it away into the uxb packet structure
+  int processUBXpacket(ubxPacket *msg);                                                                            // Once a packet has been received and validated, identify this packet's class/id and update internal flags
 
   // Send I2C/Serial/SPI commands to the module
 
@@ -1838,7 +1838,7 @@ private:
   bool createFileBuffer(void);                                  // Create the file buffer. Called by .begin
   uint16_t fileBufferSpaceAvailable(void);                      // Check how much space is available in the buffer
   uint16_t fileBufferSpaceUsed(void);                           // Check how much space is used in the buffer
-  bool storePacket(ubxPacket *msg);                             // Add a UBX packet to the file buffer
+  int storePacket(ubxPacket *msg);                              // Add a UBX packet to the file buffer
   bool storeFileBytes(uint8_t *theBytes, uint16_t numBytes);    // Add theBytes to the file buffer
   void writeToFileBuffer(uint8_t *theBytes, uint16_t numBytes); // Write theBytes to the file buffer
 

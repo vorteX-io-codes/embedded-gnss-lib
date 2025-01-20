@@ -1270,7 +1270,7 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
 bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   uint8_t processed = false;
-  while (_serialPort->available() && !processed)
+  while (_serialPort->available() && !processed && processed != -1)
   {
     processed = process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
   }
@@ -1696,7 +1696,7 @@ uint16_t SFE_UBLOX_GNSS::getMaxPayloadSize(uint8_t Class, uint8_t ID)
 // Take a given byte and file it into the proper array
 bool SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
-  bool isPacketStored = false;
+  int isPacketStored = 0;
   if (_outputPort != NULL)
     _outputPort->write(incoming); // Echo this byte to the serial port
   if ((currentSentence == SFE_UBLOX_SENTENCE_TYPE_NONE) || (currentSentence == SFE_UBLOX_SENTENCE_TYPE_NMEA))
@@ -3005,7 +3005,7 @@ void SFE_UBLOX_GNSS::processRTCM(uint8_t incoming)
 // startingSpot can be set so we only record a subset of bytes within a larger packet.
 bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
-  bool isPacketStored = false;
+  int isPacketStored = 0;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
   if (_printDebug == true)
   {
@@ -3222,6 +3222,7 @@ bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
         _debugSerial->println();
 #endif
       }
+      isPacketStored = -1;
     }
 
     // Now that the packet is complete and has been processed, we need to delete the memory
@@ -3286,7 +3287,7 @@ bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
 bool SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
-  bool isPacketStored = false;
+  int isPacketStored = 0;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
   if (_printDebug == true)
   {
@@ -7159,7 +7160,7 @@ uint16_t SFE_UBLOX_GNSS::fileBufferSpaceUsed(void)
 }
 
 // PRIVATE: Add a UBX packet to the file buffer
-bool SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
+int SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
 {
   // First, check that the file buffer has been created
   if ((ubxFileBuffer == NULL) || (fileBufferSize == 0))
@@ -7170,7 +7171,7 @@ bool SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
       _debugSerial->println(F("storePacket: file buffer not available!"));
     }
 #endif
-    return (false);
+    return 0;
   }
 
   // Now, check if there is enough space in the buffer for all of the data
@@ -7183,7 +7184,7 @@ bool SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
       _debugSerial->println(F("storePacket: insufficient space available! Data will be lost!"));
     }
 #endif
-    return (false);
+    return 0;
   }
 
   // Store the two sync chars
@@ -7207,7 +7208,7 @@ bool SFE_UBLOX_GNSS::storePacket(ubxPacket *msg)
   writeToFileBuffer(&msg->checksumA, 1);
   writeToFileBuffer(&msg->checksumB, 1);
 
-  return (true);
+  return 1;
 }
 
 // PRIVATE: Add theBytes to the file buffer
