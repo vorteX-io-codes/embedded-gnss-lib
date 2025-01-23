@@ -3285,7 +3285,7 @@ int SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t
 }
 
 // Once a packet has been received and validated, identify this packet's class/id and update internal flags
-bool SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
+int SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
 {
   int isPacketStored = 0;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
