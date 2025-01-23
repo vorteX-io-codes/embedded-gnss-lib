@@ -1694,7 +1694,7 @@ uint16_t SFE_UBLOX_GNSS::getMaxPayloadSize(uint8_t Class, uint8_t ID)
 
 // Processes NMEA and UBX binary sentences one byte at a time
 // Take a given byte and file it into the proper array
-bool SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   int isPacketStored = 0;
   if (_outputPort != NULL)
