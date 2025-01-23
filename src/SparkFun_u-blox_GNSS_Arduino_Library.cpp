@@ -3003,7 +3003,7 @@ void SFE_UBLOX_GNSS::processRTCM(uint8_t incoming)
 // Set valid to VALID or NOT_VALID once sentence is completely received and passes or fails CRC
 // The payload portion of the packet can be 100s of bytes but the max array size is packetCfgPayloadSize bytes.
 // startingSpot can be set so we only record a subset of bytes within a larger packet.
-bool SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   int isPacketStored = 0;
 #ifndef SFE_UBLOX_REDUCED_PROG_MEM
