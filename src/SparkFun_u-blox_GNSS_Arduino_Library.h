@@ -899,6 +899,7 @@ public:
   void startGNSS();
   void stopGNSS();
   void backup();
+  void setBackupModeDuring(uint32_t time);
 
   // Save configuration to BBR / Flash
   bool saveConfiguration(uint16_t maxWait = defaultMaxWait);                        // Save current configuration to flash and BBR (battery backed RAM)

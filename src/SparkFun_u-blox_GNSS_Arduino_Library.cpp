@@ -7528,6 +7528,23 @@ void SFE_UBLOX_GNSS::backup()
   sendCommand(&packetCfg, 0); // don't expect ACK
 }
 
+void SFE_UBLOX_GNSS::setBackupModeDuring(uint32_t time)
+{
+  packetCfg.cls = UBX_CLASS_RXM;
+  packetCfg.id = UBX_RXM_PMREQ;
+  packetCfg.len = 8;
+  packetCfg.startingSpot = 0;
+  payloadCfg[0] = time & 0xFF;
+  payloadCfg[1] = (time >> 8) & 0xFF;
+  payloadCfg[2] = (time >> 16) & 0xFF;
+  payloadCfg[3] = (time >> 24) & 0xFF;
+  payloadCfg[4] = 0x02; // set backup
+  payloadCfg[5] = 0;
+  payloadCfg[6] = 0;
+  payloadCfg[7] = 0;
+  sendCommand(&packetCfg, 0); // don't expect ACK
+}
+
 // Reset module to factory defaults
 // This still works but it is the old way of configuring ublox modules. See getVal and setVal for the new methods
 bool SFE_UBLOX_GNSS::factoryDefault(uint16_t maxWait)
