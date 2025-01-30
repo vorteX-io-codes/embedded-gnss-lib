@@ -1666,8 +1666,8 @@ private:
   } commType = COMM_TYPE_I2C; // Controls which port we look to for incoming bytes
 
   // Functions
-  bool checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass = 255, uint8_t requestedID = 255); // Checks module with user selected commType
-  void addToChecksum(uint8_t incoming);                                                                     // Given an incoming byte, adjust rollingChecksumA/B
+  int checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass = 255, uint8_t requestedID = 255); // Checks module with user selected commType
+  void addToChecksum(uint8_t incoming);                                                                    // Given an incoming byte, adjust rollingChecksumA/B
   size_t pushAssistNowDataInternal(size_t offset, bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck, uint16_t maxWait);
   size_t findMGAANOForDateInternal(const uint8_t *dataBytes, size_t numDataBytes, uint16_t year, uint8_t month, uint8_t day, uint8_t daysIntoFuture);
 
