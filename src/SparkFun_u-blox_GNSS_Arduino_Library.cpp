@@ -1046,13 +1046,13 @@ void SFE_UBLOX_GNSS::disableUBX7Fcheck(bool disabled)
 }
 
 // Called regularly to check for available bytes on the user' specified port
-bool SFE_UBLOX_GNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
 {
   return checkUbloxInternal(&packetCfg, requestedClass, requestedID);
 }
 
 // PRIVATE: Called regularly to check for available bytes on the user' specified port
-bool SFE_UBLOX_GNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   if (commType == COMM_TYPE_I2C)
     return (checkUbloxI2C(incomingUBX, requestedClass, requestedID));
@@ -1060,12 +1060,12 @@ bool SFE_UBLOX_GNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requeste
     return (checkUbloxSerial(incomingUBX, requestedClass, requestedID));
   else if (commType == COMM_TYPE_SPI)
     return (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
-  return false;
+  return 0;
 }
 
 // Polls I2C for data, passing any new bytes to process()
 // Returns true if new bytes are available
-bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   if (millis() - lastCheck >= i2cPollingWait)
   {
@@ -1083,7 +1083,7 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
         _debugSerial->println(i2cError);
       }
 #endif
-      return (false); // Sensor did not ACK
+      return (0); // Sensor did not ACK
     }
 
     // Forcing requestFrom to use a restart would be unwise. If bytesAvailable is zero, we want to surrender the bus.
@@ -1097,7 +1097,7 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
         _debugSerial->println(bytesReturned);
       }
 #endif
-      return (false); // Sensor did not return 2 bytes
+      return (0); // Sensor did not return 2 bytes
     }
     else // if (_i2cPort->available())
     {
@@ -1149,7 +1149,7 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
       }
 #endif
       lastCheck = millis(); // Put off checking to avoid I2C bus traffic
-      return (false);
+      return (0);
     }
 
     // Check for undocumented bit error. We found this doing logic scans.
@@ -1256,18 +1256,18 @@ bool SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClas
         }
       }
       else
-        return (false); // Sensor did not respond
+        return (0); // Sensor did not respond
 
       bytesAvailable -= bytesToRead;
     }
   }
 
-  return (true);
+  return (1);
 
 } // end checkUbloxI2C()
 
 // Checks Serial for data, passing any new bytes to process()
-bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   uint8_t processed = false;
   while (_serialPort->available() && !processed && processed != -1)
@@ -1278,7 +1278,7 @@ bool SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedC
 } // end checkUbloxSerial()
 
 // Checks SPI for data, passing any new bytes to process()
-bool SFE_UBLOX_GNSS::checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+int SFE_UBLOX_GNSS::checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   // Process the contents of the SPI buffer if not empty!
   for (uint8_t i = 0; i < spiBufferIndex; i++)
@@ -1301,7 +1301,7 @@ bool SFE_UBLOX_GNSS::checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClas
     digitalWrite(_csPin, HIGH);
     _spiPort->endTransaction();
     delay(spiPollingWait);
-    return (true);
+    return (1);
   }
 
   while ((byteReturned != 0xFF) || (currentSentence != SFE_UBLOX_SENTENCE_TYPE_NONE))
@@ -1311,7 +1311,7 @@ bool SFE_UBLOX_GNSS::checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClas
   }
   digitalWrite(_csPin, HIGH);
   _spiPort->endTransaction();
-  return (true);
+  return (1);
 
 } // end checkUbloxSpi()
 
@@ -6310,7 +6310,7 @@ size_t SFE_UBLOX_GNSS::pushAssistNowDataInternal(size_t offset, bool skipTime, c
     dataIsOK &= (*(dataBytes + dataPtr + 1) == UBX_SYNCH_2);   // Check for 0x62
     dataIsOK &= (*(dataBytes + dataPtr + 2) == UBX_CLASS_MGA); // Check for class UBX-MGA
 
-    size_t packetLength = ((size_t) * (dataBytes + dataPtr + 4)) | (((size_t) * (dataBytes + dataPtr + 5)) << 8); // Extract the length
+    size_t packetLength = ((size_t)*(dataBytes + dataPtr + 4)) | (((size_t)*(dataBytes + dataPtr + 5)) << 8); // Extract the length
 
     uint8_t checksumA = 0;
     uint8_t checksumB = 0;
@@ -6719,7 +6719,7 @@ size_t SFE_UBLOX_GNSS::findMGAANOForDateInternal(const uint8_t *dataBytes, size_
     dataIsOK &= (*(dataBytes + dataPtr + 1) == UBX_SYNCH_2);   // Check for 0x62
     dataIsOK &= (*(dataBytes + dataPtr + 2) == UBX_CLASS_MGA); // Check for class UBX-MGA
 
-    size_t packetLength = ((size_t) * (dataBytes + dataPtr + 4)) | (((size_t) * (dataBytes + dataPtr + 5)) << 8); // Extract the length
+    size_t packetLength = ((size_t)*(dataBytes + dataPtr + 4)) | (((size_t)*(dataBytes + dataPtr + 5)) << 8); // Extract the length
 
     uint8_t checksumA = 0;
     uint8_t checksumB = 0;
