@@ -1051,6 +1051,11 @@ int SFE_UBLOX_GNSS::checkUblox(uint8_t requestedClass, uint8_t requestedID)
   return checkUbloxInternal(&packetCfg, requestedClass, requestedID);
 }
 
+int SFE_UBLOX_GNSS::checkUbloxUbxOnly(uint8_t requestedClass, uint8_t requestedID)
+{
+  return checkUbloxInternalUbxOnly(&packetCfg, requestedClass, requestedID);
+}
+
 // PRIVATE: Called regularly to check for available bytes on the user' specified port
 int SFE_UBLOX_GNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
@@ -1061,6 +1066,18 @@ int SFE_UBLOX_GNSS::checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requested
   else if (commType == COMM_TYPE_SPI)
     return (checkUbloxSpi(incomingUBX, requestedClass, requestedID));
   return 0;
+}
+
+int SFE_UBLOX_GNSS::checkUbloxInternalUbxOnly(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+{
+  if (commType == COMM_TYPE_SERIAL)
+  {
+    return (checkUbloxSerialUbxOnly(incomingUBX, requestedClass, requestedID));
+  }
+  else
+  {
+    return 0;
+  }
 }
 
 // Polls I2C for data, passing any new bytes to process()
@@ -1268,6 +1285,15 @@ int SFE_UBLOX_GNSS::checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass
 
 // Checks Serial for data, passing any new bytes to process()
 int SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
+{
+  while (_serialPort->available())
+  {
+    process(_serialPort->read(), incomingUBX, requestedClass, requestedID);
+  }
+  return (true);
+} // end checkUbloxSerial()
+
+int SFE_UBLOX_GNSS::checkUbloxSerialUbxOnly(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   uint8_t processed = false;
   while (_serialPort->available() && !processed && processed != -1)
@@ -1945,51 +1971,19 @@ int SFE_UBLOX_GNSS::process(uint8_t incoming, ubxPacket *incomingUBX, uint8_t re
     // Divert incoming into the correct buffer
     if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETACK)
     {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
-      {
-        _debugSerial->println(F("GOING TO PROCESS THE PACKET ACK !!!"));
-      }
-#endif
       processUBX(incoming, &packetAck, requestedClass, requestedID);
     }
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETCFG)
     {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
-      {
-        _debugSerial->println(F("GOING TO PROCESS THE PACKET CFG !!!"));
-      }
-#endif
       processUBX(incoming, incomingUBX, requestedClass, requestedID);
     }
     else if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETBUF)
     {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
-      {
-        _debugSerial->println(F("GOING TO PROCESS THE PACKET BUF !!!"));
-      }
-#endif
       processUBX(incoming, &packetBuf, requestedClass, requestedID);
     }
     else // if (activePacketBuffer == SFE_UBLOX_PACKET_PACKETAUTO)
     {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
-      {
-        _debugSerial->println(F("GOING TO PROCESS THE AUTO PACKET !!!"));
-      }
-#endif
       isPacketStored = processUBX(incoming, &packetAuto, requestedClass, requestedID);
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true) // This is important. Print this if doing limited debugging
-      {
-        _debugSerial->print(F("process : isPacketStored ?"));
-        _debugSerial->print(isPacketStored);
-        _debugSerial->println();
-      }
-#endif
     }
 
     // Finally, increment the frame counter
@@ -3006,12 +3000,6 @@ void SFE_UBLOX_GNSS::processRTCM(uint8_t incoming)
 int SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   int isPacketStored = 0;
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-  if (_printDebug == true)
-  {
-    _debugSerial->println(F("ENTERING PROCESS UBX !!!!"));
-  }
-#endif
 
   // If incomingUBX is a user-defined custom packet, then the payload size could be different to packetCfgPayloadSize.
   // TO DO: update this to prevent an overrun when receiving an automatic message

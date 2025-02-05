@@ -775,11 +775,12 @@ public:
 
   // Changed in V1.8.1: provides backward compatibility for the examples that call checkUblox directly
   // Will default to using packetCfg to look for explicit autoPVT packets so they get processed correctly by processUBX
-  int checkUblox(uint8_t requestedClass = 0, uint8_t requestedID = 0); // Checks module with user selected commType
-
-  int checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);    // Method for I2C polling of data, passing any new bytes to process()
-  int checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID); // Method for serial polling of data, passing any new bytes to process()
-  int checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);    // Method for spi polling of data, passing any new bytes to process()
+  int checkUblox(uint8_t requestedClass = 0, uint8_t requestedID = 0);                              // Checks module with user selected commType
+  int checkUbloxUbxOnly(uint8_t requestedClass = 0, uint8_t requestedID = 0);                       // Checks module with user selected commType
+  int checkUbloxI2C(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);           // Method for I2C polling of data, passing any new bytes to process()
+  int checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);        // Method for serial polling of data, passing any new bytes to process()
+  int checkUbloxSerialUbxOnly(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID); // Method for serial polling of data, passing any new bytes to process()
+  int checkUbloxSpi(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID);           // Method for spi polling of data, passing any new bytes to process()
 
   // Process the incoming data
 
@@ -1667,7 +1668,8 @@ private:
 
   // Functions
   int checkUbloxInternal(ubxPacket *incomingUBX, uint8_t requestedClass = 255, uint8_t requestedID = 255); // Checks module with user selected commType
-  void addToChecksum(uint8_t incoming);                                                                    // Given an incoming byte, adjust rollingChecksumA/B
+  int checkUbloxInternalUbxOnly(ubxPacket *incomingUBX, uint8_t requestedClass = 255, uint8_t requestedID = 255);
+  void addToChecksum(uint8_t incoming); // Given an incoming byte, adjust rollingChecksumA/B
   size_t pushAssistNowDataInternal(size_t offset, bool skipTime, const uint8_t *dataBytes, size_t numDataBytes, sfe_ublox_mga_assist_ack_e mgaAck, uint16_t maxWait);
   size_t findMGAANOForDateInternal(const uint8_t *dataBytes, size_t numDataBytes, uint16_t year, uint8_t month, uint8_t day, uint8_t daysIntoFuture);
 
