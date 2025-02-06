@@ -901,6 +901,9 @@ public:
   void stopGNSS();
   void backup();
   void setBackupModeDuring(uint32_t time);
+  bool isUbxPacketStored();
+  bool isNavPacketStored();
+  void resetPacketStoredFlags();
 
   // Save configuration to BBR / Flash
   bool saveConfiguration(uint16_t maxWait = defaultMaxWait);                        // Save current configuration to flash and BBR (battery backed RAM)
@@ -1768,6 +1771,8 @@ private:
 
   // Variable to handle the storage rate of UBX packet
   uint32_t packetStorageRate = 1;
+  bool isUbxPacketStoredFlag = false;
+  bool isNavPacketStoredFlag = false;
 
   // Variable to track the number of packet before storing one
   uint32_t packetNumber = 1;

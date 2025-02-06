@@ -1293,6 +1293,22 @@ int SFE_UBLOX_GNSS::checkUbloxSerial(ubxPacket *incomingUBX, uint8_t requestedCl
   return (true);
 } // end checkUbloxSerial()
 
+bool SFE_UBLOX_GNSS::isUbxPacketStored()
+{
+  return isUbxPacketStoredFlag;
+}
+
+bool SFE_UBLOX_GNSS::isNavPacketStored()
+{
+  return isNavPacketStoredFlag;
+}
+
+void SFE_UBLOX_GNSS::resetPacketStoredFlags()
+{
+  isNavPacketStoredFlag = false;
+  isUbxPacketStoredFlag = false;
+}
+
 int SFE_UBLOX_GNSS::checkUbloxSerialUbxOnly(ubxPacket *incomingUBX, uint8_t requestedClass, uint8_t requestedID)
 {
   uint8_t processed = false;
@@ -3118,32 +3134,32 @@ int SFE_UBLOX_GNSS::processUBX(uint8_t incoming, ubxPacket *incomingUBX, uint8_t
 #endif
       }
 
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-      if (_printDebug == true)
-      {
-        _debugSerial->print(F("Incoming: Size: "));
-        _debugSerial->print(incomingUBX->len);
-        _debugSerial->print(F(" Received: "));
-        printPacket(incomingUBX);
+      // #ifndef SFE_UBLOX_REDUCED_PROG_MEM
+      //       if (_printDebug == true)
+      //       {
+      //         _debugSerial->print(F("Incoming: Size: "));
+      //         _debugSerial->print(incomingUBX->len);
+      //         _debugSerial->print(F(" Received: "));
+      //         printPacket(incomingUBX);
 
-        if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
-        {
-          _debugSerial->println(F("packetCfg now valid"));
-        }
-        if (packetAck.valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
-        {
-          _debugSerial->println(F("packetAck now valid"));
-        }
-        if (incomingUBX->classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
-        {
-          _debugSerial->println(F("packetCfg classAndIDmatch"));
-        }
-        if (packetAck.classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
-        {
-          _debugSerial->println(F("packetAck classAndIDmatch"));
-        }
-      }
-#endif
+      //         if (incomingUBX->valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
+      //         {
+      //           _debugSerial->println(F("packetCfg now valid"));
+      //         }
+      //         if (packetAck.valid == SFE_UBLOX_PACKET_VALIDITY_VALID)
+      //         {
+      //           _debugSerial->println(F("packetAck now valid"));
+      //         }
+      //         if (incomingUBX->classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
+      //         {
+      //           _debugSerial->println(F("packetCfg classAndIDmatch"));
+      //         }
+      //         if (packetAck.classAndIDmatch == SFE_UBLOX_PACKET_VALIDITY_VALID)
+      //         {
+      //           _debugSerial->println(F("packetAck classAndIDmatch"));
+      //         }
+      //       }
+      // #endif
 
       // We've got a valid packet, now do something with it but only if ignoreThisPayload is false
       if (ignoreThisPayload == false)
@@ -3465,7 +3481,11 @@ int SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXNAVPVT->automaticFlags.flags.bits.addToFileBuffer)
         {
-          storePacket(msg);
+          if (storePacket(msg))
+          {
+            isPacketStored = 1;
+            isNavPacketStoredFlag = true;
+          }
         }
       }
     }
@@ -4177,21 +4197,11 @@ int SFE_UBLOX_GNSS::processUBXpacket(ubxPacket *msg)
         // Check if we need to copy the data into the file buffer
         if (packetUBXRXMRAWX->automaticFlags.flags.bits.addToFileBuffer)
         {
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-          if ((_printDebug == true) || (_printLimitedDebug == true)) // This is important. Print this if doing limited debugging
+          if (storePacket(msg))
           {
-            _debugSerial->println(F("STORING PACKET RAWX---------------"));
+            isPacketStored = 1;
+            isUbxPacketStoredFlag = true;
           }
-#endif
-          isPacketStored = storePacket(msg);
-#ifndef SFE_UBLOX_REDUCED_PROG_MEM
-          if (_printDebug == true) // This is important. Print this if doing limited debugging
-          {
-            _debugSerial->print(F("processUBXPacket : isPacketStored ?"));
-            _debugSerial->print(isPacketStored);
-            _debugSerial->println();
-          }
-#endif
         }
       }
       else
